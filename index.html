@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evolutionary Grid Simulation — 3D Isometric</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Evolutionary Grid Simulation <span class="badge">3D Isometric</span></h1>
+
+  <div class="layout">
+    <!-- LEFT: canvas -->
+    <div id="canvas-wrap">
+      <canvas id="simCanvas"></canvas>
+      <div id="tooltip"></div>
+    </div>
+
+    <!-- RIGHT: controls + stats -->
+    <div id="sidebar">
+      <div class="panel" id="controls">
+        <div class="btn-row">
+          <button id="startButton">▶ Start</button>
+          <button id="pauseButton" disabled>⏸ Pause</button>
+          <button id="resetButton">↺ Reset</button>
+        </div>
+
+        <p class="stat">Generation: <strong id="generationCount">0</strong></p>
+        <p class="stat">Population: <strong id="populationCount">0</strong></p>
+
+        <label>Migration Rate
+          <div class="slider-row">
+            <input type="range" id="migrationRateSlider" min="0" max="100" value="10" />
+            <span id="migrationRateValue">10%</span>
+          </div>
+        </label>
+
+        <label>Migration Interval
+          <div class="slider-row">
+            <input type="range" id="migrationIntervalSlider" min="10" max="200" step="10" value="50" />
+            <span id="migrationIntervalValue">50 gen</span>
+          </div>
+        </label>
+
+        <label>Simulation Speed
+          <div class="slider-row">
+            <input type="range" id="speedSlider" min="1" max="20" value="5" />
+            <span id="speedValue">Medium</span>
+          </div>
+        </label>
+
+        <label class="row-label">Migration Start Gen
+          <select id="migrationStartGenDropdown">
+            <option value="100">100</option>
+            <option value="200" selected>200</option>
+            <option value="300">300</option>
+            <option value="400">400</option>
+            <option value="500">500</option>
+          </select>
+        </label>
+
+        <label class="row-label">Replacement
+          <select id="replacementStrategyDropdown">
+            <option value="leastFitted">Least Fit</option>
+            <option value="random">Random</option>
+          </select>
+        </label>
+
+        <label class="row-label autostop">
+          <span>Auto-Stop</span>
+          <input type="checkbox" id="autostopCheckbox" />
+          <select id="stopConditionDropdown">
+            <option value="allFitness100">All Islands Avg Fitness ≥ 100</option>
+            <option value="generation500">Generation 500</option>
+            <option value="generation1000">Generation 1000</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="panel" id="island-stats">
+        <h2>Island Statistics</h2>
+        <div id="island-health-list"><p>Initializing…</p></div>
+      </div>
+
+      <div class="panel" id="legend-panel">
+        <h2>Fitness Spectrum</h2>
+        <div class="legend-row">
+          <span>Low</span>
+          <div class="fitness-gradient"></div>
+          <span>High</span>
+        </div>
+        <p class="legend-note">Pillar height = tree height</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

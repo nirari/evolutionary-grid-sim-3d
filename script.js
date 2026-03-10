@@ -27,11 +27,11 @@ const GENOME_SIZE = 5;
 const FLASH_DURATION = 500;
 
 // ─────────────────────────────────────────────
-//  Isometric projection settings
+//  Isometric projection settings (mutable — set by resizeCanvas)
 // ─────────────────────────────────────────────
-const ISO_TW = 14;
-const ISO_TH = 7;
-const ISO_MAX_PILLAR = 28;
+let ISO_TW = 14;
+let ISO_TH = 7;
+let ISO_MAX_PILLAR = 28;
 
 function isoProject(col, row) {
   const cx = (col - row) * (ISO_TW / 2);
@@ -44,6 +44,7 @@ function isoProject(col, row) {
 // ─────────────────────────────────────────────
 const canvas = document.getElementById('simCanvas');
 const ctx = canvas.getContext('2d');
+let CW, CH, OX, OY;
 
 function computeCanvasSize() {
   const corners = [
@@ -61,9 +62,41 @@ function computeCanvasSize() {
   return { width: maxX - minX, height: maxY - minY, offsetX: -minX, offsetY: -minY + ISO_MAX_PILLAR };
 }
 
-const { width: CW, height: CH, offsetX: OX, offsetY: OY } = computeCanvasSize();
-canvas.width = CW;
-canvas.height = CH;
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const availW = wrap.clientWidth  - 16;
+  const availH = wrap.clientHeight - 16;
+  if (availW <= 0 || availH <= 0) return;
+
+  // The iso grid spans (GRID_SIZE) tiles wide and (GRID_SIZE) tiles tall.
+  // Width  of full grid = GRID_SIZE * ISO_TW  (diamond width per tile)
+  // Height of full grid = GRID_SIZE * ISO_TH/2 * 2 + ISO_MAX_PILLAR
+  // Solve for ISO_TW such that both fit, keeping ISO_TH = ISO_TW/2, ISO_MAX_PILLAR = ISO_TW*2
+  // gridW = GRID_SIZE * tw
+  // gridH = GRID_SIZE * (tw/2) + tw*2
+  // Scale by min(availW/gridW, availH/gridH)
+  // Let tw = target tile width:
+  //   tw = availW / GRID_SIZE
+  //   tw = availH / (GRID_SIZE/2 + 2)
+  const twFromW = availW / GRID_SIZE;
+  const twFromH = availH / (GRID_SIZE / 2 + 2);
+  let tw = Math.min(twFromW, twFromH);
+  tw = Math.max(4, tw); // minimum readable size
+
+  ISO_TW = tw;
+  ISO_TH = tw / 2;
+  ISO_MAX_PILLAR = tw * 2;
+
+  const s = computeCanvasSize();
+  CW = s.width;  CH = s.height;
+  OX = s.offsetX; OY = s.offsetY;
+  canvas.width  = Math.ceil(CW);
+  canvas.height = Math.ceil(CH);
+
+  // Remove CSS size constraints so canvas renders at its natural pixel size
+  canvas.style.width  = '';
+  canvas.style.height = '';
+}
 
 // ─────────────────────────────────────────────
 //  Simulation state
@@ -115,8 +148,15 @@ toggleControlsBtn.addEventListener('click', () => {
   controlsOpen = !controlsOpen;
   controlsBar.classList.toggle('collapsed', !controlsOpen);
   toggleControlsBtn.innerHTML = controlsOpen
-    ? '&#9881; Controls &#9650;'
-    : '&#9881; Controls &#9660;';
+    ? '&#9881; &#9650;'
+    : '&#9881; &#9660;';
+  resizeCanvas();
+  renderFrame();
+});
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  renderFrame();
 });
 
 // ─────────────────────────────────────────────
@@ -310,6 +350,7 @@ function initSimulation() {
     addRandomTree(islandIdx);
   }
 
+  resizeCanvas();
   renderFrame();
   updateControls();
 }
@@ -438,6 +479,7 @@ function handleMigration() {
 //  Rendering
 // ─────────────────────────────────────────────
 function renderFrame() {
+  if (!CW || !CH) return;
   ctx.clearRect(0, 0, CW, CH);
   const now = Date.now();
 

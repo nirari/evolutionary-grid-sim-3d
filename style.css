@@ -80,7 +80,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   background: #131313;
   border-bottom: 1px solid #242424;
   overflow: hidden;
-  transition: max-height 0.25s ease, padding 0.25s ease;
+  transition: max-height 0.25s ease;
   max-height: 300px;
   flex-shrink: 0;
 }
@@ -187,16 +187,22 @@ label {
 #canvas-wrap {
   flex: 1 1 auto;
   position: relative;
-  overflow: auto;
+  overflow: hidden;       /* no scrollbars — canvas scales to fit */
   background: #0a0a0a;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
 }
 
 #simCanvas {
   display: block;
-  /* natural size — scrollable if larger than viewport */
+  /* Scale down to fit the container while keeping aspect ratio.
+     The canvas has a fixed pixel resolution; CSS scales it visually. */
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 #tooltip {

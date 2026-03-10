@@ -29,13 +29,10 @@ const FLASH_DURATION = 500;
 // ─────────────────────────────────────────────
 //  Isometric projection settings
 // ─────────────────────────────────────────────
-// Each logical grid cell maps to an isometric tile.
-// Tile dimensions (in canvas pixels).
-const ISO_TW = 14;          // tile width  (diamond x-span)
-const ISO_TH = 7;           // tile height (diamond y-span)
-const ISO_MAX_PILLAR = 28;  // max canvas-px height for a full-height tree pillar
+const ISO_TW = 14;
+const ISO_TH = 7;
+const ISO_MAX_PILLAR = 28;
 
-// Convert grid (col, row) → canvas (cx, cy) for the TOP-LEFT corner of the tile top face.
 function isoProject(col, row) {
   const cx = (col - row) * (ISO_TW / 2);
   const cy = (col + row) * (ISO_TH / 2);
@@ -48,8 +45,6 @@ function isoProject(col, row) {
 const canvas = document.getElementById('simCanvas');
 const ctx = canvas.getContext('2d');
 
-// The grid spans from (0,0) to (GRID_SIZE-1, GRID_SIZE-1).
-// Compute required canvas size by projecting all four corners.
 function computeCanvasSize() {
   const corners = [
     isoProject(0, 0),
@@ -86,7 +81,6 @@ let MIGRATION_INTERVAL = 50;
 let REPLACEMENT_STRATEGY = 'leastFitted';
 let MIGRATION_START_GENERATION = 200;
 
-// Flash map: key "col,row" → { endTime }
 const flashMap = new Map();
 
 // ─────────────────────────────────────────────
@@ -109,18 +103,25 @@ const migrationStartGenDropdown = document.getElementById('migrationStartGenDrop
 const replacementStrategyDropdown = document.getElementById('replacementStrategyDropdown');
 const islandHealthList = document.getElementById('island-health-list');
 const tooltip = document.getElementById('tooltip');
+const toggleControlsBtn = document.getElementById('toggleControls');
+const controlsBar = document.getElementById('controls-bar');
+
+// ─────────────────────────────────────────────
+//  Collapsible controls
+// ─────────────────────────────────────────────
+let controlsOpen = false;
+
+toggleControlsBtn.addEventListener('click', () => {
+  controlsOpen = !controlsOpen;
+  controlsBar.classList.toggle('collapsed', !controlsOpen);
+  toggleControlsBtn.innerHTML = controlsOpen
+    ? '&#9881; Controls &#9650;'
+    : '&#9881; Controls &#9660;';
+});
 
 // ─────────────────────────────────────────────
 //  Color helpers
 // ─────────────────────────────────────────────
-function hslToRgb(h, s, l) {
-  s /= 100; l /= 100;
-  const k = n => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)];
-}
-
 function treeHsl(fitness, height) {
   const f = Math.min(120, fitness);
   let hue;
@@ -132,7 +133,6 @@ function treeHsl(fitness, height) {
 }
 
 function shade(hue, sat, lit, factor) {
-  // darken for side faces
   return `hsl(${hue},${sat}%,${Math.max(0, lit * factor)}%)`;
 }
 
@@ -159,7 +159,6 @@ function drawPillar(cx, cy, pillarH, topColor, hue, sat, lit) {
   if (pillarH <= 0) return;
   const ty = cy - pillarH;
 
-  // Left face (darker)
   ctx.beginPath();
   ctx.moveTo(cx, cy + ISO_TH / 2);
   ctx.lineTo(cx, ty + ISO_TH / 2);
@@ -169,7 +168,6 @@ function drawPillar(cx, cy, pillarH, topColor, hue, sat, lit) {
   ctx.fillStyle = shade(hue, sat, lit, 0.55);
   ctx.fill();
 
-  // Right face (medium)
   ctx.beginPath();
   ctx.moveTo(cx + ISO_TW / 2, cy + ISO_TH);
   ctx.lineTo(cx + ISO_TW / 2, ty + ISO_TH);
@@ -179,7 +177,6 @@ function drawPillar(cx, cy, pillarH, topColor, hue, sat, lit) {
   ctx.fillStyle = shade(hue, sat, lit, 0.75);
   ctx.fill();
 
-  // Top face
   drawTileTop(cx, ty, topColor, null);
 }
 
@@ -266,7 +263,7 @@ class Tree {
 // ─────────────────────────────────────────────
 const HWS = GRID_SIZE / 2 - WATER_CHANNEL_SIZE / 2;
 const HWE = GRID_SIZE / 2 + WATER_CHANNEL_SIZE / 2 - 1;
-const VWS = HWS, VWE = HWE; // symmetric
+const VWS = HWS, VWE = HWE;
 
 function isWater(x, y) {
   return (x >= HWS && x <= HWE) || (y >= VWS && y <= VWE);
@@ -294,7 +291,6 @@ function initSimulation() {
         : { water: MAX_CELL_RESOURCE * 0.8, nutrients: MAX_CELL_RESOURCE * 0.8 };
     })
   );
-  // Mark water in grid
   for (let i = 0; i < GRID_SIZE; i++)
     for (let j = 0; j < GRID_SIZE; j++)
       if (isWater(i, j)) grid[i][j] = 'water';
@@ -356,7 +352,6 @@ function updateEcosystem() {
     handleMigration();
   }
 
-  // Resource regen
   for (let i = 0; i < GRID_SIZE; i++)
     for (let j = 0; j < GRID_SIZE; j++) {
       cellResources[i][j].water    = Math.min(MAX_CELL_RESOURCE, cellResources[i][j].water    + MAX_CELL_RESOURCE * WATER_REGEN_RATE);
@@ -444,11 +439,8 @@ function handleMigration() {
 // ─────────────────────────────────────────────
 function renderFrame() {
   ctx.clearRect(0, 0, CW, CH);
-
   const now = Date.now();
 
-  // Draw in painter's order: top rows first, then bottom rows.
-  // Isometric painter's order: iterate rows 0→N then cols 0→N within each row.
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
       const { cx: rawCx, cy: rawCy } = isoProject(c, r);
@@ -459,7 +451,6 @@ function renderFrame() {
       const res  = cellResources[c][r];
 
       if (cell === 'water') {
-        // Animated shimmer: slight brightness pulse
         const shimmer = 0.5 + 0.06 * Math.sin(now / 600 + c * 0.3 + r * 0.2);
         drawTileTop(cx, cy, `rgba(30,80,200,${shimmer})`, 'rgba(60,120,255,0.4)');
       } else if (cell instanceof Tree) {
@@ -467,17 +458,13 @@ function renderFrame() {
         const { hue, sat, lit } = treeHsl(cell.fitness, cell.height);
         const pillarH = (cell.height / MAX_TREE_HEIGHT) * ISO_MAX_PILLAR;
         const opacity = 0.55 + 0.45 * (cell.health / MAX_HEALTH);
-
         const flashing = flashMap.has(`${c},${r}`) && flashMap.get(`${c},${r}`).endTime > now;
         const topColor = flashing
           ? `rgba(255,255,255,${opacity})`
           : `hsla(${hue},${sat}%,${lit}%,${opacity})`;
-
-        // Ground tile beneath pillar
         drawTileTop(cx, cy, `hsla(${hue},${sat}%,${Math.max(0,lit-18)}%,0.6)`, null);
         drawPillar(cx, cy, pillarH, topColor, hue, sat, lit);
       } else {
-        // Empty land — color by nutrients/water
         const nf = res.nutrients / MAX_CELL_RESOURCE;
         const wf = res.water    / MAX_CELL_RESOURCE;
         const g  = Math.round(80 + nf * 40);
@@ -487,10 +474,8 @@ function renderFrame() {
     }
   }
 
-  // Clean stale flash entries
   flashMap.forEach((v, k) => { if (v.endTime <= now) flashMap.delete(k); });
 
-  // HUD
   generationCountSpan.textContent = generation;
   populationCountSpan.textContent = trees.length;
 }
@@ -579,15 +564,11 @@ function setSimulationSpeed(val) {
 //  Tooltip on hover
 // ─────────────────────────────────────────────
 function canvasToGrid(mouseX, mouseY) {
-  // Invert the isometric projection to find the closest grid cell.
-  // Compensate for canvas CSS scaling.
   const rect = canvas.getBoundingClientRect();
   const scaleX = CW / rect.width;
   const scaleY = CH / rect.height;
   const px = mouseX * scaleX - OX;
   const py = mouseY * scaleY - OY;
-  // col = (px/tw + py/th) / 2
-  // row = (py/th - px/tw) / 2
   const col = Math.round((px / (ISO_TW / 2) + py / (ISO_TH / 2)) / 2);
   const row = Math.round((py / (ISO_TH / 2) - px / (ISO_TW / 2)) / 2);
   return { col, row };
@@ -617,14 +598,14 @@ canvas.addEventListener('mousemove', e => {
       `Nutrients: ${cell.storedNutrients.toFixed(1)}\n` +
       `Genome: [${cell.genome.map(g => g.toFixed(2)).join(', ')}]`;
     tooltip.style.display = 'block';
-    tooltip.style.left = (mx + 12) + 'px';
-    tooltip.style.top  = (my - 10) + 'px';
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top  = (e.clientY - 10) + 'px';
   } else if (cell === 'water') {
     const r = cellResources[col][row];
     tooltip.textContent = `Water cell\nX:${col}  Y:${row}\nWater: ${r.water.toFixed(1)}`;
     tooltip.style.display = 'block';
-    tooltip.style.left = (mx + 12) + 'px';
-    tooltip.style.top  = (my - 10) + 'px';
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top  = (e.clientY - 10) + 'px';
   } else {
     tooltip.style.display = 'none';
   }

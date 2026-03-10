@@ -5,14 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Evolutionary Grid Simulation — 3D Isometric</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Force topbar onto one line always */
+    #topbar {
+      flex-wrap: nowrap !important;
+      padding: 4px 8px !important;
+      gap: 8px !important;
+      align-items: center !important;
+    }
+    #topbar-title {
+      font-size: 0.75rem !important;
+      white-space: nowrap;
+      flex-shrink: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #topbar-title .badge {
+      font-size: 0.65rem !important;
+      padding: 1px 4px !important;
+    }
+    #topbar-hud {
+      font-size: 0.75rem !important;
+      gap: 8px !important;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #topbar-btns {
+      margin-left: auto;
+      flex-shrink: 0;
+      gap: 4px !important;
+      display: flex;
+    }
+    #topbar-btns button {
+      font-size: 0.72rem !important;
+      padding: 3px 7px !important;
+      white-space: nowrap;
+    }
+  </style>
 </head>
 <body>
 
   <!-- TOP BAR -->
   <div id="topbar">
     <div id="topbar-title">
-      <span>Evolutionary Grid Simulation</span>
-      <span class="badge">3D Isometric</span>
+      <span>Evo Grid Sim</span>
+      <span class="badge">3D</span>
     </div>
     <div id="topbar-hud">
       <span>Gen: <strong id="generationCount">0</strong></span>
@@ -22,7 +63,7 @@
       <button id="startButton">&#9654; Start</button>
       <button id="pauseButton" disabled>&#9646;&#9646; Pause</button>
       <button id="resetButton">&#8635; Reset</button>
-      <button id="toggleControls" title="Toggle controls">&#9881; Controls &#9660;</button>
+      <button id="toggleControls" title="Toggle controls">&#9881; &#9660;</button>
     </div>
   </div>
 

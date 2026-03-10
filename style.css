@@ -183,21 +183,21 @@ label {
 }
 .legend-note { margin-top: 4px; font-size: 10px; color: #555; }
 
-/* ── CANVAS ── */
+/* ── CANVAS AREA ── */
 #canvas-wrap {
-  flex: 1 1 auto;
+  flex: 1 1 0;          /* take remaining height, but don't grow beyond it */
+  min-height: 0;        /* critical: allows flex child to shrink below content size */
   position: relative;
-  overflow: hidden;       /* no scrollbars — canvas scales to fit */
+  overflow: hidden;
   background: #0a0a0a;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 8px;
 }
 
 #simCanvas {
   display: block;
-  /* Scale down to fit the container while keeping aspect ratio.
-     The canvas has a fixed pixel resolution; CSS scales it visually. */
   max-width: 100%;
   max-height: 100%;
   width: auto;

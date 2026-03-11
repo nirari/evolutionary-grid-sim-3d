@@ -29,3 +29,10 @@ open index.html
 # or serve with any static server:
 npx serve .
 ```
+
+## User Interface
+
+Try it here for yourself: https://nirari.github.io/evolutionary-grid-sim-3d/
+
+<img width="1512" height="861" alt="image" src="https://github.com/user-attachments/assets/068c2a7d-df75-4224-9ad3-28606cecba9c" />
+
